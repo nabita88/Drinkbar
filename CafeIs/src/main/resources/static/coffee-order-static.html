@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <title>Easy KIOSK</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+
+    <!-- 외부 스타일 & 스크립트 -->
+    <link rel="stylesheet" href="/css/kiosk.css"/>
+    <script defer src="/js/kiosk.js"></script>
+
+    <!-- branchNo 설정 -->
+    <script>
+        // URL 파라미터에서 branchNo 추출
+        const urlParams = new URLSearchParams(window.location.search);
+        const branchNo = urlParams.get('branchNo') || '1';
+
+        window.kioskConfig = {
+            branchNo: parseInt(branchNo, 10)
+        };
+    </script>
+</head>
+<body>
+<div class="kiosk-shell">
+    <!-- ▣ 헤더 ------------------------------------------------------------- -->
+    <header class="navHeader">
+        <h1>COFFEE <span id="branchName" class="branch-name"></span></h1>
+
+        <div class="navHeader__status">
+            <div id="congestionIndicator"
+                 class="congestion-indicator"
+                 onclick="window.location.href='/congestion/home'"
+                 style="cursor: pointer;"
+                 title="혼잡도 상세 정보 보기">
+                <span class="congestion-label">혼잡도</span>
+                <span class="congestion-text"></span>
+            </div>
+        </div>
+    </header>
+
+    <!--  본문 ------------------------------------------------------------- -->
+    <main class="contentWrapper">
+        <!-- 사이드패널(장바구니) - 왼쪽으로 이동 -->
+        <aside class="checkoutPanel">
+            <section id="basketSection" class="basketSection">
+                <h2 class="basketSection__title">선택한 상품</h2>
+
+                <!-- 비어 있을 때 -->
+                <div id="emptyCartMessage" class="empty-cart">
+                    <div class="empty-cart-icon">🛒</div>
+                    <p class="empty-cart-text">상품을 선택해주세요</p>
+                </div>
+
+                <!-- 아이템 리스트 -->
+                <div id="basketItemsHolder"></div>
+
+                <!-- 합계 -->
+                <div id="basketSummary" class="total-section" style="display:none;">
+                    <div class="total-amount">총 0원</div>
+                    <button class="checkout-btn" onclick="processCheckout()">주문하기</button>
+                </div>
+            </section>
+        </aside>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <div class="mainContent">
+            <!-- 카테고리 탭 -->
+            <nav class="category-tabs" role="tablist">
+                <button class="tab active" onclick="switchCategory('COFFEE', this)" role="tab">커피</button>
+                <button class="tab" onclick="switchCategory('BEVERAGE', this)" role="tab">음료</button>
+                <button class="tab" onclick="switchCategory('TEA', this)" role="tab">차</button>
+                <button class="tab" onclick="switchCategory('DESSERT', this)" role="tab">디저트</button>
+                <button class="tab" onclick="switchCategory('BAKERY', this)" role="tab">베이커리</button>
+                <button class="tab" onclick="switchCategory('FOOD', this)" role="tab">푸드</button>
+            </nav>
+
+            <section id="catalogGrid" class="catalogGrid" role="main">
+                <!-- 상품은 API에서 동적으로 로드됨 -->
+            </section>
+        </div>
+    </main>
+</div>
+</body>
+</html>

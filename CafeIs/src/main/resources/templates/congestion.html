@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>매장 혼잡도 분석</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --accent: #ff6b6b;
+            --accent-lite: #ff8e8e;
+            --accent-hover: #ff5252;
+            --bg-page: #f5f5f5;
+            --bg-card: #ffffff;
+            --gray: #6c757d;
+            --gray-border: #e9ecef;
+            --dark: #333;
+            --radius-lg: 10px;
+            --radius-sm: 5px;
+            --transition: all .3s ease;
+        }
+
+        body {
+            font-family: 'Nanum Gothic', sans-serif;
+            background: var(--bg-page);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .kiosk-shell {
+            max-width: 1024px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 헤더 */
+        .navHeader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px 20px;
+            background: pink;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            color: #fff;
+            box-shadow: 0 2px 9px rgba(255,192,203,.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .navHeader h1 {
+            font-size: clamp(1.5rem, 3.1vw, 2.1rem);
+            letter-spacing: 1px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .branch-name {
+            font-size: 0.8em;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-left: 10px;
+        }
+
+
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 메인 컨텐츠 */
+        .contentWrapper {
+            background: var(--bg-card);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            box-shadow: 0 5px 15px rgba(0,0,0,.1);
+            overflow: visible;
+            display: flex;
+            flex-wrap: wrap;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* 사이드패널(장바구니 스타일) */
+        .checkoutPanel {
+            width: 320px;
+            background: #f8f9fa;
+            border-right: 1px solid var(--gray-border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .basketSection {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.05);
+            height: 100%;
+            min-height: 0;
+        }
+
+        .basketSection__title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .basketSection__title::before {
+            content: '';
+            font-size: 1.4rem;
+        }
+
+        /* 메인 콘텐츠 영역 */
+        .mainContent {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* 탭 스타일 */
+        .category-tabs {
+            display: flex;
+            overflow-x: auto;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--gray-border);
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            width: 100%;
+            justify-content: stretch;
+        }
+
+        .category-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 100px;
+            padding: 14px 20px;
+            background: var(--bg-card);
+            border: none;
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: var(--gray);
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            position: relative;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover:not(.active) {
+            background: #f8f9fa;
+            color: #495057;
+            transform: translateY(-1px);
+        }
+
+        .tab.active {
+            background: var(--bg-card);
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .tab.active::after {
+            opacity: 1;
+        }
+
+        /* 카탈로그 그리드 */
+        .catalogGrid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 20px;
+            align-content: flex-start;
+            min-width: 0;
+        }
+
+        .catalogCard {
+            position: relative;
+            padding: 18px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--gray-border);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,.05);
+            transition: var(--transition);
+        }
+
+        .catalogCard:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 7px 18px rgba(255,107,107,.25);
+        }
+
+        .catalogCard:active {
+            transform: translateY(-2px) scale(1);
+        }
+
+        .catalogCard__thumb {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 14px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,.1);
+        }
+
+        .catalogCard__thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .stats-icon { background: pink; }
+        .quiet-icon { background: pink; }
+
+        .catalogCard__name {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+
+        .catalogCard__desc {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        /* 현재 상태 카드 */
+        .status-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--gray-border);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .status-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            background: pink;
+            color: white;
+            overflow: hidden;
+        }
+
+        .status-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .status-level {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        .status-description {
+            color: var(--gray);
+            font-size: 1.1rem;
+            margin-bottom: 18px;
+        }
+
+        .status-time {
+            background: #f8f9fa;
+            padding: 10px 16px;
+            border-radius: 24px;
+            font-size: 1rem;
+            color: var(--gray);
+            display: inline-block;
+        }
+
+        /* 매장 선택 */
+        .branch-selector {
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid var(--gray-border);
+        }
+
+        .branch-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--gray-border);
+            border-radius: var(--radius-lg);
+            font-size: 1.1rem;
+            font-family: 'Nanum Gothic', sans-serif;
+            background: var(--bg-card);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .branch-select:hover {
+            border-color: var(--accent);
+        }
+
+        .branch-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255,107,107,.1);
+        }
+
+        /* 모달 스타일 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .options-modal h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-buttons button:first-child {
+            background: var(--accent);
+            color: white;
+        }
+
+        .modal-buttons button:first-child:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .modal-buttons button:last-child {
+            background: var(--gray-border);
+            color: var(--gray);
+        }
+
+        .modal-buttons button:last-child:hover {
+            background: #dee2e6;
+        }
+
+        /* 차트 컨테이너 */
+        .chart-container {
+            height: 250px;
+            position: relative;
+            margin-top: 20px;
+        }
+
+        /* 여유 시간 아이템 */
+        .quiet-time-item {
+            background: #f0f9ff;
+            padding: 14px;
+            border-radius: var(--radius-lg);
+            margin: 10px 0;
+            border-left: 3px solid #0ea5e9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+        }
+
+        /* 버튼 */
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: var(--radius-lg);
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+            box-shadow: 0 2px 9px rgba(255,107,107,.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(255,107,107,.4);
+        }
+
+        /* 입력 필드 */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 1.1rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--gray-border);
+            border-radius: var(--radius-lg);
+            font-size: 1.1rem;
+            font-family: 'Nanum Gothic', sans-serif;
+            transition: var(--transition);
+        }
+
+        /* 로딩 */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        /* 에러 메시지 */
+        .error-message {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: var(--radius-lg);
+            margin: 10px 0;
+            font-size: 1.05rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 애니메이션 */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 반응형 */
+        @media (max-width: 1200px) {
+            .kiosk-shell { padding: 15px; }
+            .catalogGrid { grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 20px; }
+            .checkoutPanel { width: 280px; }
+        }
+
+        @media (max-width: 1024px) {
+            .kiosk-shell { padding: 12px; }
+            .contentWrapper { flex-direction: column; }
+            .checkoutPanel { width: 100%; order: -1; max-height: 300px; border-right: none; border-bottom: 1px solid var(--gray-border); }
+            .catalogGrid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .kiosk-shell { padding: 10px; }
+            .catalogGrid { grid-template-columns: repeat(3, 1fr); padding: 15px; gap: 12px; }
+            .checkoutPanel { padding: 15px; }
+            .catalogCard { padding: 14px 10px; }
+            .catalogCard__thumb { width: 60px; height: 60px; font-size: 1.4rem; }
+        }
+
+        @media (max-width: 480px) {
+            .catalogGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px; }
+            .catalogCard { padding: 12px 8px; }
+            .catalogCard__thumb { width: 50px; height: 50px; font-size: 1.2rem; }
+            .catalogCard__name { font-size: 1.05rem; }
+            .catalogCard__desc { font-size: 1.1rem; }
+            .tab { min-width: 70px; padding: 10px 8px; font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="kiosk-shell">
+    <!-- 헤더 -->
+    <header class="navHeader">
+        <h1>매장 혼잡도 <span id="branchName" class="branch-name"></span></h1>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="contentWrapper">
+        <!-- 사이드패널(장바구니 스타일) -->
+        <aside class="checkoutPanel">
+            <section class="basketSection">
+                <h2 class="basketSection__title">매장 선택</h2>
+
+                <!-- 매장 선택 -->
+                <div style="margin-bottom: 20px;">
+                    <select id="branchSelect" class="branch-select">
+                        <option value="">매장을 선택하세요</option>
+                        <option value="1">강남점</option>
+                        <option value="2">홍대점</option>
+                        <option value="3">명동점</option>
+                        <option value="4">잠실점</option>
+                        <option value="5">부산점</option>
+                    </select>
+                </div>
+
+                <!-- 현재 상태 카드 -->
+                <div class="status-card" id="currentStatusCard">
+                    <div class="status-icon" id="statusIcon">
+                        <img src="data:image/png;base64,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" alt="혼잡도 상태">
+                    </div>
+                    <div class="status-level" id="statusLevel">매장 선택</div>
+                    <div class="status-description" id="statusDescription">실시간 혼잡도를 확인하세요</div>
+                    <div class="status-time" id="statusTime">업데이트 대기중</div>
+                </div>
+            </section>
+        </aside>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <div class="mainContent">
+            <!-- 탭 -->
+            <nav class="category-tabs">
+                <button class="tab active" onclick="location.reload()">매장 혼잡도</button>
+                <button class="tab" onclick="goToKiosk()">메뉴 주문</button>
+            </nav>
+
+            <!-- 콘텐츠 그리드 -->
+            <section id="catalogGrid" class="catalogGrid">
+                <!-- 시간별 통계 카드 -->
+                <div class="catalogCard fade-in" onclick="openModal('statsModal')" style="grid-column: span 2;">
+                    <div class="catalogCard__thumb stats-icon">
+                        <img src="data:image/png;base64,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" alt="시간별 통계">
+                    </div>
+                    <h3 class="catalogCard__name">시간별 혼잡도 통계</h3>
+                    <p class="catalogCard__desc">클릭하여 확인</p>
+                </div>
+
+                <!-- 여유 시간 추천 카드 -->
+                <div class="catalogCard fade-in" onclick="openModal('quietModal')" style="grid-column: span 2;">
+                    <div class="catalogCard__thumb quiet-icon">
+                        <img src="data:image/png;base64,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" alt="여유 시간 추천">
+                    </div>
+                    <h3 class="catalogCard__name">여유 시간대 추천</h3>
+                    <p class="catalogCard__desc">클릭하여 확인</p>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<!-- 통계 모달 -->
+<div id="statsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="options-modal">
+            <h3>📊 시간별 혼잡 통계</h3>
+            <div id="statsLoading" class="loading">데이터를 불러오는 중...</div>
+            <div id="statsError" class="error-message hidden"></div>
+            <div class="chart-container">
+                <canvas id="statsChart"></canvas>
+            </div>
+            <div class="modal-buttons">
+                <button onclick="closeModal('statsModal')">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 여유 시간 모달 -->
+<div id="quietModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="options-modal">
+            <h3>😌 여유 시간대 추천</h3>
+            <div class="input-group">
+                <label class="input-label">추천 개수</label>
+                <input type="number" id="quietCount" value="5" min="1" max="10" class="input-field">
+            </div>
+            <button class="btn-primary" onclick="getQuietTimes()">조회하기</button>
+            <div id="quietTimesResult" style="margin-top: 20px;"></div>
+            <div class="modal-buttons">
+                <button onclick="closeModal('quietModal')">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentBranch = '';
+    let charts = {};
+
+    // Kiosk 페이지로 이동
+    function goToKiosk() {
+        if (!currentBranch) {
+            alert('매장을 먼저 선택하세요.');
+            return;
+        }
+
+        // 선택된 매장의 이름 가져오기
+        const branchSelect = document.getElementById('branchSelect');
+        const selectedOption = branchSelect.options[branchSelect.selectedIndex];
+        const branchTitle = selectedOption.text;
+
+        // 선택된 매장번호와 매장명으로 메뉴 주문 페이지로 이동
+        const encodedTitle = encodeURIComponent(branchTitle);
+        window.location.href = `/coffee_order?branchNo=${currentBranch}&branchTitle=${encodedTitle}`;
+    }
+
+    // 매장 선택 이벤트
+    document.getElementById('branchSelect').addEventListener('change', function() {
+        currentBranch = this.value;
+        if (currentBranch) {
+            loadBranchInfo();
+            refreshAllData();
+        } else {
+            clearAllData();
+        }
+    });
+
+    // 지점 정보 로드
+    async function loadBranchInfo() {
+        try {
+            const response = await axios.get(`/api/v1/Branches/${currentBranch}`);
+            if (response.data && response.data.branchName) {
+                document.getElementById('branchName').textContent = `- ${response.data.branchName}점`;
+            }
+        } catch (err) {
+            console.error('지점 정보 로드 실패:', err);
+        }
+    }
+
+    // 모달 관련 함수
+    function openModal(modalId) {
+        if (!currentBranch) {
+            alert('매장을 먼저 선택하세요.');
+            return;
+        }
+
+        document.getElementById(modalId).style.display = 'flex';
+
+        switch(modalId) {
+            case 'statsModal':
+                getStats();
+                break;
+            case 'quietModal':
+                break;
+        }
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    // 전체 데이터 새로고침
+    function refreshAllData() {
+        if (!currentBranch) {
+            alert('매장을 먼저 선택하세요.');
+            return;
+        }
+
+        getCurrentStatus();
+    }
+
+    // 모든 데이터 클리어
+    function clearAllData() {
+        document.getElementById('branchName').textContent = '';
+        document.getElementById('statusLevel').textContent = '매장 선택';
+        document.getElementById('statusDescription').textContent = '실시간 혼잡도를 확인하세요';
+        document.getElementById('statusTime').textContent = '업데이트 대기중';
+        document.getElementById('statusIcon').innerHTML = '<div style="font-size: 60px;">📍</div>';
+
+        Object.values(charts).forEach(chart => chart.destroy());
+        charts = {};
+    }
+
+    // 현재 혼잡도 조회
+    async function getCurrentStatus() {
+        try {
+            const response = await axios.get(`/api/congestion/current/${currentBranch}`);
+
+            console.log('API 응답:', response.data); // 디버깅용 로그
+
+            if (response.data.success) {
+                const status = response.data.data;
+
+                console.log('상태 값:', status); // 디버깅용 로그
+
+                const statusMap = {
+                    'NORMAL': { text: '여유', icon: '😌', desc: '원활한 주문 처리 가능' },
+                    'BUSY': { text: '보통', icon: '🤔', desc: '다소 대기 시간 발생 가능' },
+                    'VERY_BUSY': { text: '혼잡', icon: '😰', desc: '긴 대기 시간 예상' }
+                };
+
+                const currentStatus = statusMap[status] || statusMap['NORMAL'];
+
+                console.log('매핑된 상태:', currentStatus); // 디버깅용 로그
+
+                document.getElementById('statusLevel').textContent = currentStatus.text;
+                document.getElementById('statusDescription').textContent = currentStatus.desc;
+                document.getElementById('statusTime').textContent = `업데이트: ${new Date().toLocaleTimeString('ko-KR')}`;
+
+                // 상태별 아이콘 HTML 설정
+                let iconHtml = '';
+                if (status === 'NORMAL') {
+                    iconHtml = `<div style="font-size: 60px;">${currentStatus.icon}</div>`;
+                } else if (status === 'BUSY') {
+                    iconHtml = `<div style="font-size: 60px;">${currentStatus.icon}</div>`;
+                } else if (status === 'VERY_BUSY') {
+                    iconHtml = `<div style="font-size: 60px;">${currentStatus.icon}</div>`;
+                } else {
+                    iconHtml = `<div style="font-size: 60px;">😌</div>`;
+                }
+
+                document.getElementById('statusIcon').innerHTML = iconHtml;
+            } else {
+                console.log('API 응답 실패:', response.data);
+            }
+        } catch (error) {
+            console.error('현재 상태 조회 실패:', error);
+            document.getElementById('statusLevel').textContent = '조회 실패';
+            document.getElementById('statusDescription').textContent = '데이터를 불러올 수 없습니다';
+        }
+    }
+
+    // 통계 정보 조회
+    async function getStats() {
+        const loadingEl = document.getElementById('statsLoading');
+        const errorEl = document.getElementById('statsError');
+
+        try {
+            loadingEl.style.display = 'block';
+            errorEl.classList.add('hidden');
+
+            const response = await axios.get(`/api/congestion/stats/${currentBranch}`);
+
+            loadingEl.style.display = 'none';
+
+            if (response.data.success) {
+                const statsData = response.data.data;
+                createStatsChart(statsData, 'statsChart');
+            } else {
+                throw new Error(response.data.message);
+            }
+
+        } catch (error) {
+            console.error('통계 조회 실패:', error);
+            loadingEl.style.display = 'none';
+            errorEl.classList.remove('hidden');
+            errorEl.textContent = error.response?.data?.message || '통계 데이터를 불러올 수 없습니다';
+        }
+    }
+
+    // 여유 시간대 조회
+    async function getQuietTimes() {
+        const count = document.getElementById('quietCount').value || 3;
+
+        if (!currentBranch) {
+            alert('매장을 먼저 선택하세요.');
+            return;
+        }
+
+        try {
+            const response = await axios.get(`/api/congestion/quiet-times/${currentBranch}?count=${count}`);
+
+            if (response.data.success) {
+                const quietTimes = response.data.data;
+                const resultEl = document.getElementById('quietTimesResult');
+
+                if (!quietTimes || quietTimes.length === 0) {
+                    resultEl.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">추천할 여유 시간대가 없습니다</div>';
+                    return;
+                }
+
+                let html = '';
+                quietTimes.forEach(time => {
+                    html += `
+                            <div class="quiet-time-item">
+                                <strong>${time}</strong>
+                                <span style="color: #0ea5e9; font-weight: 600;">여유</span>
+                            </div>
+                        `;
+                });
+
+                resultEl.innerHTML = html;
+            } else {
+                throw new Error(response.data.message);
+            }
+
+        } catch (error) {
+            console.error('여유 시간대 조회 실패:', error);
+            document.getElementById('quietTimesResult').innerHTML = `
+                    <div class="error-message">${error.response?.data?.message || '여유 시간대 조회에 실패했습니다'}</div>
+                `;
+        }
+    }
+
+    // 통계 차트 생성
+    function createStatsChart(statsData, canvasId) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+
+        if (charts[canvasId]) {
+            charts[canvasId].destroy();
+        }
+
+        // 시간별로 정렬
+        const sortedData = statsData.sort((a, b) => {
+            return new Date(a.timeWindow) - new Date(b.timeWindow);
+        });
+
+        // 차트 데이터 준비
+        const labels = sortedData.map(item => {
+            const date = new Date(item.timeWindow);
+            return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        });
+
+        const data = sortedData.map(item => item.requestTally);
+
+        // 색상 설정 (혼잡도에 따라)
+        const backgroundColors = sortedData.map(item => {
+            switch(item.congestionStatus) {
+                case 'NORMAL': return '#10b981';
+                case 'BUSY': return '#f59e0b';
+                case 'VERY_BUSY': return '#ef4444';
+                default: return '#6b7280';
+            }
+        });
+
+        charts[canvasId] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '주문 수',
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const index = context.dataIndex;
+                                const status = sortedData[index].congestionStatus;
+                                const statusMap = {
+                                    'NORMAL': '여유',
+                                    'BUSY': '보통',
+                                    'VERY_BUSY': '혼잡'
+                                };
+                                return '상태: ' + statusMap[status];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f1f5f9'
+                        },
+                        title: {
+                            display: true,
+                            text: '주문 수'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: '시간'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 모달 외부 클릭 시 닫기
+    window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            event.target.style.display = 'none';
+        }
+    });
+
+    // 페이지 로드 시 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+        // 30초마다 현재 상태 업데이트
+        setInterval(function() {
+            if (currentBranch) {
+                getCurrentStatus();
+            }
+        }, 30000);
+    });
+</script>
+</body>
+</html>

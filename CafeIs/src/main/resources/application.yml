@@ -1,0 +1,53 @@
+
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  # JPA 공통 설정
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MariaDBDialect
+        default_batch_fetch_size: 100
+        jdbc:
+          batch_size: 25
+          batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
+
+  servlet:
+    multipart:
+      max-request-size: 30MB
+      max-file-size: 10MB
+
+  # Jackson 설정
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+    date-format: yyyy-MM-dd'T'HH:mm:ss
+    time-zone: Asia/Seoul
+
+  # Thymeleaf 기본 설정
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+
+# Swagger 설정
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+  packages-to-scan: com.example.cafeis.controller
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json

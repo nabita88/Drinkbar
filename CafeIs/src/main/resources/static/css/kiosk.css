@@ -1,0 +1,342 @@
+/* kiosk.css -------------------------------------------------------------- */
+:root{
+    --accent: pink;
+    --accent-lite:lightpink;
+    --accent-hover:hotpink;
+    --bg-page:#f5f5f5;
+    --bg-card:#ffffff;
+    --gray:#6c757d;
+    --gray-border:#e9ecef;
+    --dark:#333;
+    --radius-lg:10px;
+    --radius-sm:5px;
+    --transition:all .3s ease;
+}
+/* RESET */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'NanumGothic','Nanum Gothic',sans-serif;background:var(--bg-page);min-height:100vh;line-height:1.6}
+
+/* ---------- Layout ---------- */
+.kiosk-shell{max-width:1024px;margin:0 auto;padding:20px;height:100vh;display:flex;flex-direction:column}
+.contentWrapper{background:var(--bg-card);border-radius:0 0 var(--radius-lg) var(--radius-lg);box-shadow:0 5px 15px rgba(0,0,0,.1);overflow:visible;display:flex;flex-wrap:wrap;flex:1;min-height:0}
+.mainContent{flex:1;display:flex;flex-direction:column;min-width:0}
+
+/* ---------- Header ---------- */
+.navHeader{display:flex;justify-content:center;align-items:center;padding:16px 20px;background:linear-gradient(135deg,pink,lightpink);border-radius:var(--radius-lg)var(--radius-lg)0 0;color:#fff;box-shadow:0 2px 9px rgba(255,192,203,.3);position:relative;overflow:hidden}
+.navHeader h1{font-size:clamp(1.5rem,3.1vw,2.1rem);letter-spacing:1px;font-weight:700;position:relative;z-index:1}
+.branch-name{font-size:0.8em;font-weight:400;opacity:0.9;margin-left:10px}
+
+.navHeader__status{position:absolute;right:20px;display:flex;align-items:center;gap:10px;z-index:1}
+
+/* Congestion chip */
+.congestion-indicator{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:16px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(10px);transition:var(--transition);font-size:1.15rem}
+.congestion-label{font-size:0.9rem;font-weight:600;opacity:0.9}
+.congestion-text{font-size:1rem;font-weight:700}
+.congestion-indicator.NORMAL{background:rgba(76,175,80,.2);border-color:rgba(76,175,80,.3)}
+.congestion-indicator.BUSY{background:rgba(255,193,7,.2);border-color:rgba(255,193,7,.3);animation:pulse 2s infinite}
+.congestion-indicator.VERY_BUSY{background:rgba(244,67,54,.2);border-color:rgba(244,67,54,.3);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+/* ---------- Tabs ---------- */
+.category-tabs{display:flex;overflow-x:auto;background:var(--bg-card);border-bottom:1px solid var(--gray-border);scrollbar-width:none;-ms-overflow-style:none;width:100%;justify-content:stretch}
+.category-tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:100px;padding:14px 20px;background:var(--bg-card);border:none;font-weight:600;font-size:1.25rem;color:var(--gray);cursor:pointer;transition:var(--transition);white-space:nowrap;position:relative;border-bottom:2px solid transparent}
+.tab:hover:not(.active){background:#f8f9fa;color:#495057;transform:translateY(-1px)}
+.tab.active{background:var(--bg-card);color:pink;border-bottom-color:pink}
+.tab::after{content:'';position:absolute;bottom:-2px;left:0;width:100%;height:2px;background:pink;opacity:0;transition:var(--transition)}
+.tab.active::after{opacity:1}
+
+/* ---------- Catalog grid ---------- */
+.catalogGrid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:15px;padding:20px;align-content:flex-start;min-width:0}
+
+/* ---------- Coffee Menu Table ---------- */
+.coffee-menu-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 15px;
+}
+
+.menu-item {
+    padding: 24px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+    transition: var(--transition);
+    vertical-align: top;
+}
+
+.menu-item:hover {
+    border-color: pink;
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 7px 18px rgba(255,192,203,.25);
+}
+
+.menu-item:active {
+    transform: translateY(-2px) scale(1);
+}
+
+.menu-item.selected {
+    border-color: pink;
+    background: lavenderblush;
+    animation: itemBlink .4s;
+}
+
+.menu-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, lightpink, pink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
+
+.menu-name {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 6px;
+}
+
+.menu-price {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: pink;
+}
+
+/* 빈 셀 스타일 */
+.empty-cell {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    cursor: default;
+}
+
+/* 기존 catalogCard 스타일 유지 (동적 로드용) */
+.catalogCard{position:relative;padding:18px 14px;background:var(--bg-card);border:1px solid var(--gray-border);border-radius:var(--radius-lg);text-align:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.05);transition:var(--transition)}
+.catalogCard:hover{border-color:pink;transform:translateY(-4px) scale(1.03);box-shadow:0 7px 18px rgba(255,192,203,.25)}
+.catalogCard.selected{border-color:pink;background:lavenderblush;animation:itemBlink .4s}
+@keyframes itemBlink{0%{transform:translateY(-2px) scale(1)}50%{transform:translateY(-5px) scale(1.06)}100%{transform:translateY(-2px) scale(1)}}
+.catalogCard__thumb{width:70px;height:70px;margin:0 auto 14px;border-radius:50%;background:linear-gradient(135deg,lightpink,pink);display:flex;align-items:center;justify-content:center;font-size:1.6rem;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.catalogCard__thumb img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.catalogCard__name{font-size:1.15rem;font-weight:600;color:var(--dark);margin-bottom:6px}
+.catalogCard__price{font-weight:700;font-size:1.2rem;color:pink}
+
+/* ---------- Checkout panel ---------- */
+.checkoutPanel{width:320px;background:#f8f9fa;border-right:1px solid var(--gray-border);padding:20px;display:flex;flex-direction:column;gap:20px;height:100%;overflow-y:auto}
+.basketSection{display:flex;flex-direction:column;background:var(--bg-card);border-radius:var(--radius-lg);padding:20px;box-shadow:0 2px 6px rgba(0,0,0,.05);height:100%;min-height:0}
+.basketSection__title{font-size:1.25rem;font-weight:700;color:var(--dark);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.basketSection__title::before{content:'🛒';font-size:1.4rem}
+#basketItemsHolder{flex:1;overflow-y:auto;overflow-x:hidden;margin-bottom:12px;padding-right:5px;min-height:0}
+#basketItemsHolder::-webkit-scrollbar{width:6px}
+#basketItemsHolder::-webkit-scrollbar-track{background:#f1f1f1;border-radius:3px}
+#basketItemsHolder::-webkit-scrollbar-thumb{background:#888;border-radius:3px}
+#basketItemsHolder::-webkit-scrollbar-thumb:hover{background:#555}
+.order-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--gray-border);transition:var(--transition)}
+.order-item:hover{background:rgba(255,192,203,.05);margin:0 -8px;padding:12px 8px;border-radius:var(--radius-sm)}
+.order-item:last-child{border-bottom:none}
+.item-name{font-weight:600;color:var(--dark);font-size:1.05rem;margin-bottom:3px}
+.item-price{font-weight:600;color:pink;font-size:1rem}
+.quantity-controls{display:flex;align-items:center;gap:10px}
+.qty-btn{width:24px;height:24px;border:none;border-radius:50%;background:pink;color:#fff;font-weight:700;font-size:1.05rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition)}
+.qty-btn:hover{background:hotpink;transform:scale(1.1)}
+.qty-btn:active{transform:scale(.92)}
+.qty-display{min-width:20px;text-align:center;font-weight:600;font-size:1.1rem}
+
+.total-section{margin-top:auto;padding-top:16px;border-top:1px solid var(--gray-border);text-align:center;flex-shrink:0}
+.total-amount{font-size:1.6rem;font-weight:700;color:pink;margin-bottom:14px;text-shadow:1px 1px 2px rgba(0,0,0,.1)}
+.checkout-btn{width:100%;padding:14px;border:none;border-radius:var(--radius-lg);background:linear-gradient(135deg,pink,lightpink);color:#fff;font-size:1.15rem;font-weight:700;cursor:pointer;position:relative;overflow:hidden;transition:var(--transition);box-shadow:0 2px 9px rgba(255,192,203,.3)}
+.checkout-btn:hover{background:hotpink;transform:translateY(-1px)}
+.checkout-btn::before{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,.25);transform:translate(-50%,-50%);transition:width .6s,height .6s}
+.checkout-btn:hover::before{width:180px;height:180px}
+
+/* 빈 장바구니 */
+.empty-cart{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;color:var(--gray);flex:1}
+.empty-cart-icon{font-size:2.5rem;margin-bottom:16px;opacity:.5;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.empty-cart-text{font-size:1.15rem}
+
+/* 상태 & 애니메이션 */
+.fade-in{animation:fadeIn .4s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.loading{pointer-events:none;opacity:.6;position:relative}
+.loading::after{content:'';position:absolute;top:50%;left:50%;width:24px;height:24px;border:2px solid var(--gray-border);border-top:2px solid pink;border-radius:50%;animation:spin 1s linear infinite;transform:translate(-50%,-50%)}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1200px){
+    .kiosk-shell{padding:15px}
+    .catalogGrid{grid-template-columns:repeat(3,1fr);gap:15px;padding:20px}
+    .checkoutPanel{width:280px}
+}
+@media(max-width:1024px){
+    .kiosk-shell{padding:12px}
+    .contentWrapper{flex-direction:column}
+    .checkoutPanel{width:100%;order:-1;max-height:300px;border-right:none;border-bottom:1px solid var(--gray-border)}
+    .catalogGrid{grid-template-columns:repeat(3,1fr)}
+    /* 테이블 반응형 */
+    .coffee-menu-table {
+        border-spacing: 12px;
+    }
+    .menu-item {
+        padding: 18px 12px;
+    }
+}
+@media(max-width:768px){
+    .kiosk-shell{padding:10px}
+    .catalogGrid{grid-template-columns:repeat(3,1fr);padding:15px;gap:12px}
+    .checkoutPanel{padding:15px}
+    .icon-btn{width:30px;height:30px;font-size:1rem}
+    .catalogCard{padding:14px 10px}
+    .catalogCard__thumb{width:60px;height:60px;font-size:1.4rem}
+    /* 테이블 반응형 */
+    .coffee-menu-table {
+        border-spacing: 10px;
+    }
+    .menu-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+}
+@media(max-width:480px){
+    .catalogGrid{grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}
+    .catalogCard{padding:12px 8px}
+    .catalogCard__thumb{width:50px;height:50px;font-size:1.2rem}
+    .catalogCard__name{font-size:1.05rem}
+    .catalogCard__price{font-size:1.1rem}
+    .tab{min-width:70px;padding:10px 8px;font-size:1.1rem}
+    .total-amount{font-size:1.4rem}
+    /* 테이블 반응형 */
+    .coffee-menu-table {
+        border-spacing: 8px;
+    }
+    .menu-item {
+        padding:12px 8px;
+    }
+    .menu-icon {
+        width:50px;
+        height:50px;
+        font-size:1.2rem;
+    }
+    .menu-name {
+        font-size:1.05rem;
+    }
+    .menu-price {
+        font-size:1.1rem;
+    }
+}
+
+/* ---------- Options Modal ---------- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 30px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.options-modal h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.option-group {
+    margin-bottom: 20px;
+}
+
+.option-group h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray);
+    margin-bottom: 10px;
+}
+
+.option-group label {
+    display: inline-block;
+    margin-right: 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.option-group input[type="radio"] {
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.option-group label:hover {
+    color: pink;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.modal-buttons button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.modal-buttons button:first-child {
+    background: pink;
+    color: white;
+}
+
+.modal-buttons button:first-child:hover {
+    background: hotpink;
+    transform: translateY(-1px);
+}
+
+.modal-buttons button:last-child {
+    background: var(--gray-border);
+    color: var(--gray);
+}
+
+.modal-buttons button:last-child:hover {
+    background: #dee2e6;
+}

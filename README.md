@@ -70,7 +70,9 @@ http://localhost:8080/swagger-ui.html
 
 ###  ERD
 ```
-
+<div align="center">
+  <img src="https://raw.githubusercontent.com/nabita88/Drinkbar/main/erd/ERD.png" width="800" alt="데이터베이스 설계도">
+</div>
 ```
 
 ###  파일 구조

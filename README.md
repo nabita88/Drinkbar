@@ -70,7 +70,7 @@ http://localhost:8080/swagger-ui.html
 
 ###  ERD
 ```
-![ERD](https://github.com/user-attachments/assets/2903ed7e-65dd-4610-856d-957a33fd5966.png)
+![ERD](https://github.com/user-attachments/assets/2903ed7e-65dd-4610-856d-957a33fd5966)
 ```
 
 ###  파일 구조

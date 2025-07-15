@@ -71,7 +71,7 @@ http://localhost:8080/swagger-ui.html
 ###  ERD
 ```
 <div align="center">
-  <img src="https://raw.githubusercontent.com/nabita88/Drinkbar/main/erd/ERD.png" width="800" alt="데이터베이스 설계도">
+  <img src="https://github.com/user-attachments/assets/2903ed7e-65dd-4610-856d-957a33fd5966" width="800" alt="데이터베이스 설계도">
 </div>
 ```
 
